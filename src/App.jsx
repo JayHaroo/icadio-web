@@ -1,29 +1,88 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import logo from './assets/transparent/Logo-with-name.png';
 import listen from './assets/transparent/Listen.png';
 
 function App() {
   const videoRef = useRef(null);
+  const [caption, setCaption] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [useWebcam, setUseWebcam] = useState(false); // State to toggle between back camera and webcam
 
   useEffect(() => {
-    // Get the user's media (camera)
+    startCamera();
+
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [useWebcam]);
+
+  const startCamera = () => {
+    const constraints = {
+      video: {
+        facingMode: useWebcam ? 'user' : { exact: 'environment' },
+      },
+    };
+
     navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { exact: 'environment' }, // Use the back camera on mobile devices
-        },
-      })
+      .getUserMedia(constraints)
       .then((stream) => {
-        // Set the stream to the video element
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       })
       .catch((err) => {
-        console.error("Error accessing the camera: ", err);
+        console.error('Error accessing the camera: ', err);
       });
-  }, []);
+  };
+
+  const captureImage = () => {
+    const videoElement = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg');
+    });
+  };
+
+  const handleGenerateCaption = async () => {
+    const imageBlob = await captureImage();
+    if (!imageBlob) return;
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('image', imageBlob, 'webcam_image.jpg');
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/caption', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setCaption(result.caption);
+        setAudioUrl('');
+      } else {
+        console.error('Error:', result.error);
+        setCaption('Failed to generate caption.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setCaption('An error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div>
@@ -34,7 +93,22 @@ function App() {
         <video ref={videoRef} autoPlay className="w-full h-full object-cover"></video>
       </div>
       <div className="flex items-center justify-center">
-        <img src={listen} alt="listen-logo" className="w-[120px]" />
+        {caption && (
+          <div>
+            <p>Caption: {caption}</p>
+          </div>
+        )}
+      </div>
+      {audioUrl && <audio src={audioUrl} controls autoPlay />}
+      <div className="flex items-center justify-center">
+        <button onClick={handleGenerateCaption} disabled={loading}>
+          {loading ? 'Generating...' : <img src={listen} alt="listen-logo" className="w-[120px]" />}
+        </button>
+      </div>
+      <div className="flex items-center justify-center">
+        <button onClick={() => setUseWebcam((prev) => !prev)}>
+          {useWebcam ? 'Switch to Back Camera' : 'Switch to Webcam'}
+        </button>
       </div>
     </div>
   );
