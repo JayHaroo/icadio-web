@@ -5,10 +5,11 @@ import listen from './assets/transparent/Listen.png';
 
 function App() {
   const videoRef = useRef(null);
+  const audioRef = useRef(null); // Ref for the audio element
   const [caption, setCaption] = useState('');
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState('');
-  const [useWebcam, setUseWebcam] = useState(false); // State to toggle between back camera and webcam
+  const [useWebcam, setUseWebcam] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -71,36 +72,55 @@ function App() {
       const result = await response.json();
       if (response.ok) {
         setCaption(result.caption);
-        setAudioUrl('');
+        if (result.audioUrl) {
+          setAudioUrl(result.audioUrl);
+        } else {
+          setAudioUrl('');
+        }
       } else {
         console.error('Error:', result.error);
         setCaption('Failed to generate caption.');
+        setAudioUrl('');
       }
     } catch (error) {
       console.error('Error:', error);
       setCaption('An error occurred.');
+      setAudioUrl('');
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const handlePlayAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    }
+  };
 
   return (
-    <div>
-      <div className="flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center mb-4">
         <img src={logo} alt="icadio-logo" className="w-[120px]" />
       </div>
-      <div className="flex items-center justify-center w-[400px] h-[400px] bg-black">
+      <div className="flex items-center justify-center w-[400px] h-[400px] bg-black mb-4">
         <video ref={videoRef} autoPlay className="w-full h-full object-cover"></video>
       </div>
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center mb-4">
         {caption && (
           <div>
             <p>Caption: {caption}</p>
           </div>
         )}
       </div>
-      {audioUrl && <audio src={audioUrl} controls autoPlay />}
-      <div className="flex items-center justify-center">
+      {audioUrl && (
+        <div className="flex items-center justify-center mb-4">
+          <audio ref={audioRef} src={audioUrl} controls />
+          <button onClick={handlePlayAudio}>Play Audio</button>
+        </div>
+      )}
+      <div className="flex items-center justify-center mb-4">
         <button onClick={handleGenerateCaption} disabled={loading}>
           {loading ? 'Generating...' : <img src={listen} alt="listen-logo" className="w-[120px]" />}
         </button>
