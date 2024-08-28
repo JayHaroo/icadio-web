@@ -72,6 +72,12 @@ function App() {
       const result = await response.json();
       if (response.ok) {
         setCaption(result.caption);
+
+        // Trigger vibration
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
+        }
+
         if (result.audioUrl) {
           setAudioUrl(result.audioUrl);
         } else {
