@@ -5,7 +5,7 @@ import listen from './assets/transparent/Listen.png';
 
 function App() {
   const videoRef = useRef(null);
-  const audioRef = useRef(null); // Ref for the audio element
+  const audioRef = useRef(null);
   const [caption, setCaption] = useState('');
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState('');
@@ -65,45 +65,42 @@ function App() {
     formData.append('image', imageBlob, 'webcam_image.jpg');
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/caption', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      if (response.ok) {
-        setCaption(result.caption);
+        const response = await fetch('http://127.0.0.1:5000/caption', {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json();
+        if (response.ok) {
+            setCaption(result.caption);
 
-        // Trigger vibration
-        if (navigator.vibrate) {
-          navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
-        }
+            // Trigger vibration
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
+            }
 
-        if (result.audioUrl) {
-          setAudioUrl(result.audioUrl);
+            if (result.audioUrl) {
+                setAudioUrl(result.audioUrl);
+
+                // Automatically play the audio after setting the audio URL
+                setTimeout(() => {
+                    handlePlayAudio();
+                }, 100); // Small delay to ensure the audio element is ready
+            } else {
+                setAudioUrl('');
+            }
         } else {
-          setAudioUrl('');
+            console.error('Error:', result.error);
+            setCaption('Failed to generate caption.');
+            setAudioUrl('');
         }
-      } else {
-        console.error('Error:', result.error);
-        setCaption('Failed to generate caption.');
-        setAudioUrl('');
-      }
     } catch (error) {
-      console.error('Error:', error);
-      setCaption('An error occurred.');
-      setAudioUrl('');
+        console.error('Error:', error);
+        setCaption('An error occurred.');
+        setAudioUrl('');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-
-  const handlePlayAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(error => {
-        console.error('Error playing audio:', error);
-      });
-    }
-  };
+};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -120,12 +117,6 @@ function App() {
           </div>
         )}
       </div>
-      {audioUrl && (
-        <div className="flex items-center justify-center mb-4">
-          <audio ref={audioRef} src={audioUrl} controls />
-          <button onClick={handlePlayAudio}>Play Audio</button>
-        </div>
-      )}
       <div className="flex items-center justify-center mb-4">
         <button onClick={handleGenerateCaption} disabled={loading}>
           {loading ? 'Generating...' : <img src={listen} alt="listen-logo" className="w-[120px]" />}
