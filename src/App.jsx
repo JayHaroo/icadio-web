@@ -151,9 +151,6 @@ function App() {
             <img src={listen} alt="listen-logo" className="w-[120px]" />
           )}
         </button>
-        <button disabled={loading}>
-            <img src={gen} alt="listen-logo" className="w-[120px]" />
-        </button>
       </div>
       <div className="flex items-center justify-center">
         <button onClick={() => setUseWebcam((prev) => !prev)}>
