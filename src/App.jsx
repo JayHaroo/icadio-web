@@ -86,8 +86,6 @@ function App() {
           // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
-            const value = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(value);
           }, 100); // Small delay to ensure the audio element is ready
         } else {
           setAudioUrl("");
@@ -97,25 +95,16 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
-        setTimeout(() => {
-          handlePlayAudio();
-          const value = new SpeechSynthesisUtterance(text);
-          window.speechSynthesis.speak(value);
-        }, 100);
       }
     } catch (error) {
       console.error("Error:", error);
       setCaption("An error occurred.");
       setText("Error " + error);
       setAudioUrl("");
-
-      setTimeout(() => {
-        handlePlayAudio();
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
-      }, 100);
     } finally {
       setLoading(false);
+      const value = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(value);
     }
   };
 
