@@ -80,6 +80,9 @@ function App() {
           navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
         }
 
+        const value = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(value);
+
         if (result.audioUrl) {
           setAudioUrl(result.audioUrl);
 
@@ -95,16 +98,20 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
+
+        const value = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(value);
       }
     } catch (error) {
       console.error("Error:", error);
       setCaption("An error occurred.");
       setText("Error " + error);
       setAudioUrl("");
-    } finally {
-      setLoading(false);
+
       const value = new SpeechSynthesisUtterance(text);
       window.speechSynthesis.speak(value);
+    } finally {
+      setLoading(false);
     }
   };
 
