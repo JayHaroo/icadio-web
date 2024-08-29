@@ -98,11 +98,9 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
-        setTimeout(() => {
-          handlePlayAudio();
-          const value = new SpeechSynthesisUtterance(text);
-          window.speechSynthesis.speak(value);
-        }, 100);
+
+        const value = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(value);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -110,11 +108,8 @@ function App() {
       setText("Error " + error);
       setAudioUrl("");
 
-      setTimeout(() => {
-        handlePlayAudio();
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
-      }, 100);
+      const value = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(value);
     } finally {
       setLoading(false);
     }
