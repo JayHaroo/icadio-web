@@ -87,8 +87,8 @@ function App() {
           // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
-            const value = new SpeechSynthesisUtterance(text);
-            window.speechSynthesis.speak(value);
+            // const value = new SpeechSynthesisUtterance(text);
+            // window.speechSynthesis.speak(value);
           }, 100); // Small delay to ensure the audio element is ready
         } else {
           setAudioUrl("");
@@ -99,20 +99,22 @@ function App() {
         setText("Error " + result.error);
         setAudioUrl("");
 
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
+        // const value = new SpeechSynthesisUtterance(text);
+        // window.speechSynthesis.speak(value);
       }
     } catch (error) {
       console.error("Error:", error);
       setCaption("An error occurred.");
       setText("Error " + error);
       setAudioUrl("");
-
-      const value = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(value);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleListen = () => {
+    const value = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(value);
   };
 
   return (
@@ -139,11 +141,15 @@ function App() {
           {loading ? (
             "Generating..."
           ) : (
-            <img src={listen} alt="listen-logo" className="w-[120px]" />
+            <img src={gen} alt="listen-logo" className="w-[120px]" />
           )}
         </button>
-        <button disabled={loading}>
-            <img src={gen} alt="listen-logo" className="w-[120px]" />
+        <button onClick={handleListen} disabled={loading}>
+          {loading ? (
+            "Captioning AI"
+          ) : (
+            <img src={listen} alt="listen-logo" className="w-[120px]" />
+          )}
         </button>
       </div>
       <div className="flex items-center justify-center">
