@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 import logo from "./assets/transparent/Logo-with-name.png";
 import listen from "./assets/transparent/Listen.png";
+import gen from "./assets/transparent/gen.png";
 
 function App() {
   const test = "asdasd";
@@ -80,15 +81,14 @@ function App() {
           navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
         }
 
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
-
         if (result.audioUrl) {
           setAudioUrl(result.audioUrl);
 
           // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
+            const value = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(value);
           }, 100); // Small delay to ensure the audio element is ready
         } else {
           setAudioUrl("");
@@ -98,9 +98,11 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
-
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
+        setTimeout(() => {
+          handlePlayAudio();
+          const value = new SpeechSynthesisUtterance(text);
+          window.speechSynthesis.speak(value);
+        }, 100);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -108,8 +110,11 @@ function App() {
       setText("Error " + error);
       setAudioUrl("");
 
-      const value = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(value);
+      setTimeout(() => {
+        handlePlayAudio();
+        const value = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(value);
+      }, 100);
     } finally {
       setLoading(false);
     }
@@ -141,6 +146,9 @@ function App() {
           ) : (
             <img src={listen} alt="listen-logo" className="w-[120px]" />
           )}
+        </button>
+        <button disabled={loading}>
+            <img src={gen} alt="listen-logo" className="w-[120px]" />
         </button>
       </div>
       <div className="flex items-center justify-center">
