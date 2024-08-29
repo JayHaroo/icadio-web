@@ -80,15 +80,14 @@ function App() {
           navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
         }
 
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
-
         if (result.audioUrl) {
           setAudioUrl(result.audioUrl);
 
           // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
+            const value = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(value);
           }, 100); // Small delay to ensure the audio element is ready
         } else {
           setAudioUrl("");
@@ -98,9 +97,11 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
-
-        const value = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(value);
+        setTimeout(() => {
+          handlePlayAudio();
+          const value = new SpeechSynthesisUtterance(text);
+          window.speechSynthesis.speak(value);
+        }, 100);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -108,8 +109,11 @@ function App() {
       setText("Error " + error);
       setAudioUrl("");
 
-      const value = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(value);
+      setTimeout(() => {
+        handlePlayAudio();
+        const value = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(value);
+      }, 100);
     } finally {
       setLoading(false);
     }
