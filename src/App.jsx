@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
-import logo from "./assets/transparent/Logo-with-name.png";
+import logo from "./assets/transparent/Logo.png";
 import listen from "./assets/transparent/Listen.png";
 import gen from "./assets/transparent/gen.png";
+import flash from "./assets/transparent/Flash.png";
 
 function App() {
   const test = "asdasd";
   const [text, setText] = useState("");
   const videoRef = useRef(null);
-  const audioRef = useRef(null);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   const [useWebcam, setUseWebcam] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -87,8 +88,6 @@ function App() {
           // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
-            // const value = new SpeechSynthesisUtterance(text);
-            // window.speechSynthesis.speak(value);
           }, 100); // Small delay to ensure the audio element is ready
         } else {
           setAudioUrl("");
@@ -98,9 +97,6 @@ function App() {
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
         setAudioUrl("");
-
-        // const value = new SpeechSynthesisUtterance(text);
-        // window.speechSynthesis.speak(value);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -115,6 +111,25 @@ function App() {
   const handleListen = () => {
     const value = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(value);
+  };
+
+  const toggleTorch = async () => {
+    const videoTrack = videoRef.current?.srcObject
+      ?.getVideoTracks()[0];
+
+    if (videoTrack) {
+      const capabilities = videoTrack.getCapabilities();
+
+      if (capabilities.torch) {
+        const settings = videoTrack.getSettings();
+        await videoTrack.applyConstraints({
+          advanced: [{ torch: !torchOn }],
+        });
+        setTorchOn(!torchOn);
+      } else {
+        console.error("Torch is not supported on this device");
+      }
+    }
   };
 
   return (
@@ -138,21 +153,18 @@ function App() {
       </div>
       <div className="flex items-center justify-center mb-4">
         <button onClick={handleGenerateCaption} disabled={loading}>
-          {loading ? (
-            "Generating..."
-          ) : (
-            <img src={gen} alt="listen-logo" className="w-[120px]" />
-          )}
+          {loading ? "Generating..." : <img src={gen} alt="gen-logo" className="w-[120px]" />}
         </button>
         <button onClick={handleListen} disabled={loading}>
-          {loading ? (
-            "Captioning AI"
-          ) : (
-            <img src={listen} alt="listen-logo" className="w-[120px]" />
-          )}
+          {loading ? "Captioning AI" : <img src={listen} alt="listen-logo" className="w-[120px]" />}
+        </button>
+        <div className="flex items-center justify-center mb-4">
+        <button onClick={toggleTorch}>
+          {torchOn ? <img src={flash} alt="listen-logo" className="w-[120px]" /> : <img src={flash} alt="listen-logo" className="w-[120px]" />}
         </button>
       </div>
-      <div className="flex items-center justify-center">
+      </div>
+      <div className="flex items-center justify-center mb-4">
         <button onClick={() => setUseWebcam((prev) => !prev)}>
           {useWebcam ? "Switch to Back Camera" : "Switch to Webcam"}
         </button>
