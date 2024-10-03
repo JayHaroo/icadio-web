@@ -1,18 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 import logo from "./assets/transparent/Logo.png";
-import gen from "./assets/transparent/GenList.png";
 
 function App() {
   const [text, setText] = useState("");
   const videoRef = useRef(null);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
-  const [audioUrl, setAudioUrl] = useState("");
-  const [useWebcam, setUseWebcam] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
-  const [longPress, setLongPress] = useState(false);
-  let pressTimer = useRef(null);
+  const [useWebcam, setUseWebcam] = useState(false);
+  let startX = 0, startY = 0;
 
   useEffect(() => {
     startCamera();
@@ -59,6 +56,8 @@ function App() {
   };
 
   const handleGenerateCaption = async () => {
+    if (loading) return;
+
     const imageBlob = await captureImage();
     if (!imageBlob) return;
 
@@ -77,29 +76,19 @@ function App() {
         setCaption(result.caption);
         setText(result.caption);
 
+        // Trigger vibration when caption is ready
         if (navigator.vibrate) {
           navigator.vibrate([200, 100, 200]);
-        }
-
-        if (result.audioUrl) {
-          setAudioUrl(result.audioUrl);
-          setTimeout(() => {
-            handlePlayAudio();
-          }, 100);
-        } else {
-          setAudioUrl("");
         }
       } else {
         console.error("Error:", result.error);
         setCaption("Failed to generate caption.");
         setText("Error " + result.error);
-        setAudioUrl("");
       }
     } catch (error) {
       console.error("Error:", error);
       setCaption("An error occurred.");
       setText("Error " + error);
-      setAudioUrl("");
     } finally {
       setLoading(false);
     }
@@ -127,61 +116,50 @@ function App() {
     }
   };
 
-  const handleButtonClick = () => {
-    if (!longPress) {
-      handleGenerateCaption(); // Single tap: Generate caption
-    }
-  };
+  const handleSwipe = (e) => {
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
 
-  const handleButtonDoubleClick = () => {
-    handleListen(); // Double tap: Speak the caption
-  };
+    const diffX = startX - endX;
+    const diffY = startY - endY;
 
-  const handleButtonPress = () => {
-    pressTimer.current = setTimeout(() => {
-      setLongPress(true);
-      toggleTorch(); // Long press: Toggle torch
-    }, 500); // Adjust the long press duration if needed
-  };
-
-  const handleButtonRelease = () => {
-    clearTimeout(pressTimer.current);
-    if (!longPress) {
-      setLongPress(false);
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      // Horizontal swipe
+      if (diffX > 50) {
+        // Swipe left or right to read the caption
+        handleListen();
+      } else if (diffX < -50) {
+        handleListen();
+      }
+    } else {
+      // Vertical swipe
+      if (diffY > 50) {
+        // Swipe up or down to toggle the torch
+        toggleTorch();
+      } else if (diffY < -50) {
+        toggleTorch();
+      }
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div
+      className="flex flex-col items-center justify-center min-h-screen"
+      onTouchStart={(e) => {
+        startX = e.changedTouches[0].clientX;
+        startY = e.changedTouches[0].clientY;
+      }}
+      onTouchEnd={handleSwipe}
+      onClick={handleGenerateCaption} // Single tap anywhere to generate caption
+    >
       <div className="flex items-center justify-center mb-4">
         <img src={logo} alt="icadio-logo" className="w-[120px]" />
       </div>
       <div className="flex items-center justify-center w-[400px] h-[400px] bg-black mb-4">
-        <video
-          ref={videoRef}
-          autoPlay
-          className="w-full h-full object-cover"
-        ></video>
+        <video ref={videoRef} autoPlay className="w-full h-full object-cover"></video>
       </div>
       <div className="flex items-center justify-center mb-4">
-        {caption && (
-          <div>
-            <p>Caption: {caption}</p>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center justify-center mb-4">
-        <button
-          onClick={handleButtonClick}
-          onDoubleClick={handleButtonDoubleClick}
-          onMouseDown={handleButtonPress}
-          onMouseUp={handleButtonRelease}
-          onTouchStart={handleButtonPress}
-          onTouchEnd={handleButtonRelease}
-          disabled={loading}
-        >
-          {loading ? "Processing..." : <img src={gen} alt="gen-logo" className="w-[400px] h-[110px] object-cover" />}
-        </button>
+        {caption && <p>Caption: {caption}</p>}
       </div>
       <div className="flex items-center justify-center mb-4">
         <button onClick={() => setUseWebcam((prev) => !prev)}>
