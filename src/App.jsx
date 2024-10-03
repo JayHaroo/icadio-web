@@ -1,12 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 import logo from "./assets/transparent/Logo.png";
-import listen from "./assets/transparent/Listen.png";
-import gen from "./assets/transparent/gen.png";
-import flash from "./assets/transparent/Flash.png";
+import gen from "./assets/transparent/GenList.png";
 
 function App() {
-  const test = "asdasd";
   const [text, setText] = useState("");
   const videoRef = useRef(null);
   const [caption, setCaption] = useState("");
@@ -14,6 +11,8 @@ function App() {
   const [audioUrl, setAudioUrl] = useState("");
   const [useWebcam, setUseWebcam] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [longPress, setLongPress] = useState(false);
+  let pressTimer = useRef(null);
 
   useEffect(() => {
     startCamera();
@@ -77,18 +76,16 @@ function App() {
       if (response.ok) {
         setCaption(result.caption);
         setText(result.caption);
-        // Trigger vibration
+
         if (navigator.vibrate) {
-          navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate for 200ms, pause for 100ms, then vibrate for 200ms
+          navigator.vibrate([200, 100, 200]);
         }
 
         if (result.audioUrl) {
           setAudioUrl(result.audioUrl);
-
-          // Automatically play the audio after setting the audio URL
           setTimeout(() => {
             handlePlayAudio();
-          }, 100); // Small delay to ensure the audio element is ready
+          }, 100);
         } else {
           setAudioUrl("");
         }
@@ -114,14 +111,12 @@ function App() {
   };
 
   const toggleTorch = async () => {
-    const videoTrack = videoRef.current?.srcObject
-      ?.getVideoTracks()[0];
+    const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
 
     if (videoTrack) {
       const capabilities = videoTrack.getCapabilities();
 
       if (capabilities.torch) {
-        const settings = videoTrack.getSettings();
         await videoTrack.applyConstraints({
           advanced: [{ torch: !torchOn }],
         });
@@ -129,6 +124,30 @@ function App() {
       } else {
         console.error("Torch is not supported on this device");
       }
+    }
+  };
+
+  const handleButtonClick = () => {
+    if (!longPress) {
+      handleGenerateCaption(); // Single tap: Generate caption
+    }
+  };
+
+  const handleButtonDoubleClick = () => {
+    handleListen(); // Double tap: Speak the caption
+  };
+
+  const handleButtonPress = () => {
+    pressTimer.current = setTimeout(() => {
+      setLongPress(true);
+      toggleTorch(); // Long press: Toggle torch
+    }, 500); // Adjust the long press duration if needed
+  };
+
+  const handleButtonRelease = () => {
+    clearTimeout(pressTimer.current);
+    if (!longPress) {
+      setLongPress(false);
     }
   };
 
@@ -152,17 +171,17 @@ function App() {
         )}
       </div>
       <div className="flex items-center justify-center mb-4">
-        <button onClick={handleGenerateCaption} disabled={loading}>
-          {loading ? "Generating..." : <img src={gen} alt="gen-logo" className="w-[120px]" />}
+        <button
+          onClick={handleButtonClick}
+          onDoubleClick={handleButtonDoubleClick}
+          onMouseDown={handleButtonPress}
+          onMouseUp={handleButtonRelease}
+          onTouchStart={handleButtonPress}
+          onTouchEnd={handleButtonRelease}
+          disabled={loading}
+        >
+          {loading ? "Processing..." : <img src={gen} alt="gen-logo" className="w-[400px] h-[110px] object-cover" />}
         </button>
-        <button onClick={handleListen} disabled={loading}>
-          {loading ? "Captioning AI" : <img src={listen} alt="listen-logo" className="w-[120px]" />}
-        </button>
-        <div className="flex items-center justify-center mb-4">
-        <button onClick={toggleTorch}>
-          {torchOn ? <img src={flash} alt="listen-logo" className="w-[120px]" /> : <img src={flash} alt="listen-logo" className="w-[120px]" />}
-        </button>
-      </div>
       </div>
       <div className="flex items-center justify-center mb-4">
         <button onClick={() => setUseWebcam((prev) => !prev)}>
