@@ -166,6 +166,10 @@ function App() {
           {useWebcam ? "Switch to Back Camera" : "Switch to Webcam"}
         </button>
       </div>
+      
+      <div className="">Tap to generate caption</div>
+      <div className="">Swipe Left/Right to listen</div>
+      <div className="h-[50px]">Swipe Up/Down to toggle torch</div>
     </div>
   );
 }
